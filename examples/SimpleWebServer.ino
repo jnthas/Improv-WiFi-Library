@@ -1,28 +1,39 @@
-#include <WiFi.h>
-#include <Esp.h>
-#include "ImprovWiFiLib.h"
 
 #define LED_BUILTIN 2
 #define MAX_ATTEMPTS_WIFI_CONNECTION 20
 #define ARDUINO 1
 
+#include <ImprovWiFiLibrary.h>
+#include <WiFi.h>
+#include <Esp.h>
 
-//*** Web Server
 WiFiServer server(80);
+ImprovWiFi improvSerial(&Serial);
 
 char linebuf[80];
 int charcount=0;
 
-
-void onImprovWiFiError(improv::Error err) {
+void onImprovWiFiErrorCb(improv::Error err) {
+  server.stop();
   blink_led(2000, 3);
 }
 
-void onImprovWiFiConnected(std::string ssid, std::string password) {
+void onImprovWiFiConnectedCb(std::string ssid, std::string password) {
+  //Save ssid and password here
   server.begin();
   blink_led(100, 3);
 }
 
+
+bool connectWifi(std::string ssid, std::string password) {
+  WiFi.begin(ssid.c_str(), password.c_str());
+
+  while (!improvSerial.isConnected()) {
+    blink_led(500, 1);
+  }
+
+  return true;
+}
 
 void setup() {
   Serial.begin(115200);
@@ -31,39 +42,26 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
 
-  ImprovWiFi::getParams()->firmwareName = "ImprovWiFiLib";
-  ImprovWiFi::getParams()->firmwareVersion = "1.0.0";
-  ImprovWiFi::getParams()->deviceName = "BasicWebServer";
-  ImprovWiFi::getParams()->deviceUrl = "http://{LOCAL_IPV4}?name=Jonathas&test=1";
-  ImprovWiFi::getParams()->chipFamily = ImprovWiFi::CF_ESP32;
-
-
-  ImprovWiFi::setOnImprovWiFiError(onImprovWiFiError);
-  ImprovWiFi::setOnImprovWiFiConnected(onImprovWiFiConnected);
+  improvSerial.setDeviceInfo(improv::ChipFamily::CF_ESP32, "ImprovWiFiLib", "1.0.0", "BasicWebServer", "http://{LOCAL_IPV4}?name=Guest");
+  improvSerial.onImprovWiFiError(onImprovWiFiErrorCb);
+  improvSerial.onImprovWiFiConnected(onImprovWiFiConnectedCb);
+  //Optional
+  improvSerial.setCustomConnectWiFi(connectWifi);
   
-  
-  ImprovWiFi::setup();
-
-
-  Serial.println("Setup finished");
   blink_led(100, 5);
-
 }
 
 void loop() {
 
-  ImprovWiFi::loop();
+  improvSerial.handleSerial();
 
-
-  if (ImprovWiFi::isConnected()) {
-    handle_request();  
+  if (improvSerial.isConnected()) {
+    handleHttpRequest();  
   }
   
 }
 
-
-
-void handle_request() {
+void handleHttpRequest() {
 
   WiFiClient client = server.available();
   if (client) 
@@ -128,5 +126,3 @@ void blink_led(int d, int times) {
   }
   
 }
-
-

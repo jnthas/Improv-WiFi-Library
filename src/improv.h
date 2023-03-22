@@ -11,12 +11,6 @@
 
 namespace improv {
 
-static const char *const SERVICE_UUID = "00467768-6228-2272-4663-277478268000";
-static const char *const STATUS_UUID = "00467768-6228-2272-4663-277478268001";
-static const char *const ERROR_UUID = "00467768-6228-2272-4663-277478268002";
-static const char *const RPC_COMMAND_UUID = "00467768-6228-2272-4663-277478268003";
-static const char *const RPC_RESULT_UUID = "00467768-6228-2272-4663-277478268004";
-static const char *const CAPABILITIES_UUID = "00467768-6228-2272-4663-277478268005";
 
 enum Error : uint8_t {
   ERROR_NONE = 0x00,
@@ -61,11 +55,21 @@ struct ImprovCommand {
   std::string password;
 };
 
-ImprovCommand parse_improv_data(const std::vector<uint8_t> &data, bool check_checksum = true);
-ImprovCommand parse_improv_data(const uint8_t *data, size_t length, bool check_checksum = true);
+enum ChipFamily : uint8_t {
+  CF_ESP32,
+  CF_ESP32_C3,
+  CF_ESP32_S2,
+  CF_ESP32_S3,
+  CF_ESP8266
+};
 
-bool parse_improv_serial_byte(size_t position, uint8_t byte, const uint8_t *buffer,
-                              std::function<bool(ImprovCommand)> &&callback, std::function<void(Error)> &&on_error);
+struct ImprovWiFiParamsStruct {
+  std::string firmwareName;
+  std::string firmwareVersion;
+  ChipFamily chipFamily;
+  std::string deviceName;
+  std::string deviceUrl;
+};
 
 std::vector<uint8_t> build_rpc_response(Command command, const std::vector<std::string> &datum,
                                         bool add_checksum = true);
