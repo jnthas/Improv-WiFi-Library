@@ -71,10 +71,5 @@ struct ImprovWiFiParamsStruct {
   std::string deviceUrl;
 };
 
-std::vector<uint8_t> build_rpc_response(Command command, const std::vector<std::string> &datum,
-                                        bool add_checksum = true);
-#ifdef ARDUINO
-std::vector<uint8_t> build_rpc_response(Command command, const std::vector<String> &datum, bool add_checksum = true);
-#endif  // ARDUINO
 
 }  // namespace improv
