@@ -1,91 +1,95 @@
 
 #define LED_BUILTIN 2
-#define MAX_ATTEMPTS_WIFI_CONNECTION 20
-#define ARDUINO 1
 
-#include <ImprovWiFiLibrary.h>
 #include <WiFi.h>
 #include <Esp.h>
+#include <ImprovWiFiLibrary.h>
 
 WiFiServer server(80);
 ImprovWiFi improvSerial(&Serial);
 
 char linebuf[80];
-int charcount=0;
+int charcount = 0;
 
-void onImprovWiFiErrorCb(improv::Error err) {
+void onImprovWiFiErrorCb(ImprovTypes::Error err)
+{
   server.stop();
   blink_led(2000, 3);
 }
 
-void onImprovWiFiConnectedCb(std::string ssid, std::string password) {
-  //Save ssid and password here
+void onImprovWiFiConnectedCb(const char *ssid, const char *password)
+{
+  // Save ssid and password here
   server.begin();
   blink_led(100, 3);
 }
 
+bool connectWifi(const char *ssid, const char *password)
+{
+  WiFi.begin(ssid, password);
 
-bool connectWifi(std::string ssid, std::string password) {
-  WiFi.begin(ssid.c_str(), password.c_str());
-
-  while (!improvSerial.isConnected()) {
+  while (!improvSerial.isConnected())
+  {
     blink_led(500, 1);
   }
 
   return true;
 }
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
   pinMode(LED_BUILTIN, OUTPUT);
 
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
 
-  improvSerial.setDeviceInfo(improv::ChipFamily::CF_ESP32, "ImprovWiFiLib", "1.0.0", "BasicWebServer", "http://{LOCAL_IPV4}?name=Guest");
-  improvSerial.onImprovWiFiError(onImprovWiFiErrorCb);
-  improvSerial.onImprovWiFiConnected(onImprovWiFiConnectedCb);
-  //Optional
-  improvSerial.setCustomConnectWiFi(connectWifi);
-  
+  improvSerial.setDeviceInfo(ImprovTypes::ChipFamily::CF_ESP32, "ImprovWiFiLib", "1.0.0", "BasicWebServer", "http://{LOCAL_IPV4}?name=Guest");
+  improvSerial.onImprovError(onImprovWiFiErrorCb);
+  improvSerial.onImprovConnected(onImprovWiFiConnectedCb);
+  improvSerial.setCustomConnectWiFi(connectWifi);  // Optional
+
   blink_led(100, 5);
 }
 
-void loop() {
+void loop()
+{
 
   improvSerial.handleSerial();
 
-  if (improvSerial.isConnected()) {
-    handleHttpRequest();  
+  if (improvSerial.isConnected())
+  {
+    handleHttpRequest();
   }
-  
 }
 
-void handleHttpRequest() {
+void handleHttpRequest()
+{
 
   WiFiClient client = server.available();
-  if (client) 
+  if (client)
   {
     blink_led(100, 1);
-    memset(linebuf,0,sizeof(linebuf));
-    charcount=0;
+    memset(linebuf, 0, sizeof(linebuf));
+    charcount = 0;
     // an http request ends with a blank line
     boolean currentLineIsBlank = true;
-    while (client.connected()) 
+    while (client.connected())
     {
-      if (client.available()) 
+      if (client.available())
       {
         char c = client.read();
-        //read char by char HTTP request
-        linebuf[charcount]=c;
-        if (charcount<sizeof(linebuf)-1) charcount++;
+        // read char by char HTTP request
+        linebuf[charcount] = c;
+        if (charcount < sizeof(linebuf) - 1)
+          charcount++;
 
-        if (c == '\n' && currentLineIsBlank) 
+        if (c == '\n' && currentLineIsBlank)
         {
           // send a standard http response header
           client.println("HTTP/1.1 200 OK");
           client.println("Content-Type: text/html");
-          client.println("Connection: close");  // the connection will be closed after completion of the response
+          client.println("Connection: close"); // the connection will be closed after completion of the response
           client.println();
           client.println("<!DOCTYPE HTML><html><body>");
           client.println("<h1 id=\"welcome\">Welcome!</h1>");
@@ -114,15 +118,16 @@ void handleHttpRequest() {
     }
     delay(1);
     client.stop();
-  }  
+  }
 }
 
-void blink_led(int d, int times) {
-  for (int j=0; j<times; j++){
+void blink_led(int d, int times)
+{
+  for (int j = 0; j < times; j++)
+  {
     digitalWrite(LED_BUILTIN, HIGH);
     delay(d);
     digitalWrite(LED_BUILTIN, LOW);
     delay(d);
   }
-  
 }

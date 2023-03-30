@@ -2,7 +2,18 @@
 
 #ifdef ARDUINO
 #include <Arduino.h>
-#endif  // ARDUINO
+#endif
+
+
+
+#ifndef MAX_ATTEMPTS_WIFI_CONNECTION
+  #define MAX_ATTEMPTS_WIFI_CONNECTION 20
+#endif
+
+#ifndef DELAY_MS_WAIT_WIFI_CONNECTION
+  #define DELAY_MS_WAIT_WIFI_CONNECTION 500
+#endif
+
 
 #include <cstdint>
 #include <functional>

@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+
+h2md/
+.vscode/
