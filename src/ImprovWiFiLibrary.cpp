@@ -14,64 +14,64 @@ void ImprovWiFi::handleSerial() {
   }
 }
 
-void ImprovWiFi::onErrorCallback(improv::Error err) {
+void ImprovWiFi::onErrorCallback(ImprovTypes::Error err) {
   if (onImprovWiFiErrorCallback) {
     onImprovWiFiErrorCallback(err);
   }
 }
 
-bool ImprovWiFi::onCommandCallback(improv::ImprovCommand cmd) {
+bool ImprovWiFi::onCommandCallback(ImprovTypes::ImprovCommand cmd) {
 
   switch (cmd.command) {
-    case improv::Command::GET_CURRENT_STATE:
+    case ImprovTypes::Command::GET_CURRENT_STATE:
     {
       if (isConnected()) {
-        setState(improv::State::STATE_PROVISIONED);
+        setState(ImprovTypes::State::STATE_PROVISIONED);
         sendDeviceUrl(cmd.command);
       } else {
-        setState(improv::State::STATE_AUTHORIZED);
+        setState(ImprovTypes::State::STATE_AUTHORIZED);
       }
       
       break;
     }
 
-    case improv::Command::WIFI_SETTINGS:
+    case ImprovTypes::Command::WIFI_SETTINGS:
     {
     
       if (cmd.ssid.empty()) {
-        setError(improv::Error::ERROR_INVALID_RPC);
+        setError(ImprovTypes::Error::ERROR_INVALID_RPC);
         break;
       }
 
-      setState(improv::STATE_PROVISIONING);
+      setState(ImprovTypes::STATE_PROVISIONING);
 
       bool success = false;
 
       if (customConnectWiFiCallback) {
-        success = customConnectWiFiCallback(cmd.ssid, cmd.password);
+        success = customConnectWiFiCallback(cmd.ssid.c_str(), cmd.password.c_str());
       } else {
-        success = tryConnectToWifi(cmd.ssid, cmd.password);
+        success = tryConnectToWifi(cmd.ssid.c_str(), cmd.password.c_str());
       }
 
       
       if (success) {
-        setError(improv::Error::ERROR_NONE);
-        setState(improv::STATE_PROVISIONED);
+        setError(ImprovTypes::Error::ERROR_NONE);
+        setState(ImprovTypes::STATE_PROVISIONED);
         sendDeviceUrl(cmd.command);
         if (onImprovWiFiConnectedCallback) {
-          onImprovWiFiConnectedCallback(cmd.ssid, cmd.password);
+          onImprovWiFiConnectedCallback(cmd.ssid.c_str(), cmd.password.c_str());
         }
         
       } else {
-        setState(improv::STATE_STOPPED);
-        setError(improv::ERROR_UNABLE_TO_CONNECT);
-        onErrorCallback(improv::ERROR_UNABLE_TO_CONNECT);
+        setState(ImprovTypes::STATE_STOPPED);
+        setError(ImprovTypes::ERROR_UNABLE_TO_CONNECT);
+        onErrorCallback(ImprovTypes::ERROR_UNABLE_TO_CONNECT);
       }
       
       break;
     }
 
-    case improv::Command::GET_DEVICE_INFO:
+    case ImprovTypes::Command::GET_DEVICE_INFO:
     {
       std::vector<std::string> infos = {
         // Firmware name
@@ -83,32 +83,32 @@ bool ImprovWiFi::onCommandCallback(improv::ImprovCommand cmd) {
         // Device name
         improvWiFiParams.deviceName
       };
-      std::vector<uint8_t> data = improv::build_rpc_response(improv::GET_DEVICE_INFO, infos, false);
+      std::vector<uint8_t> data = build_rpc_response(ImprovTypes::GET_DEVICE_INFO, infos, false);
       sendResponse(data);
       break;
     }
 
-    case improv::Command::GET_WIFI_NETWORKS:
+    case ImprovTypes::Command::GET_WIFI_NETWORKS:
     {
       getAvailableWifiNetworks();
       break;
     }
 
     default: {
-      setError(improv::ERROR_UNKNOWN_RPC);
+      setError(ImprovTypes::ERROR_UNKNOWN_RPC);
       return false;
     }
   }
 
   return true;
 }
-void ImprovWiFi::setDeviceInfo(improv::ChipFamily chipFamily, std::string firmwareName, std::string firmwareVersion, std::string deviceName) {
+void ImprovWiFi::setDeviceInfo(ImprovTypes::ChipFamily chipFamily, const char* firmwareName, const char* firmwareVersion, const char* deviceName) {
   improvWiFiParams.chipFamily = chipFamily;
   improvWiFiParams.firmwareName = firmwareName;
   improvWiFiParams.firmwareVersion = firmwareVersion;
   improvWiFiParams.deviceName = deviceName;  
 }
-void ImprovWiFi::setDeviceInfo(improv::ChipFamily chipFamily, std::string firmwareName, std::string firmwareVersion, std::string deviceName, std::string deviceUrl) {
+void ImprovWiFi::setDeviceInfo(ImprovTypes::ChipFamily chipFamily, const char* firmwareName, const char* firmwareVersion, const char* deviceName, const char* deviceUrl) {
   setDeviceInfo(chipFamily, firmwareName, firmwareVersion, deviceName);
   improvWiFiParams.deviceUrl = deviceUrl;
 }
@@ -118,16 +118,20 @@ bool ImprovWiFi::isConnected() {
   return (WiFi.status() == WL_CONNECTED);
 }
 
-void ImprovWiFi::sendDeviceUrl(improv::Command cmd) {
+void ImprovWiFi::sendDeviceUrl(ImprovTypes::Command cmd) {
   // URL where user can finish onboarding or use device
   // Recommended to use website hosted by device
+
+  auto address = WiFi.localIP();
+  auto ipStr = std::string{address[0]} + "." + std::string{address[1]} + "." + std::string{address[2]} + "." + std::string{address[3]};
+
   if (improvWiFiParams.deviceUrl.empty()) {
-    improvWiFiParams.deviceUrl = String("http://" + WiFi.localIP().toString()).c_str();
+    improvWiFiParams.deviceUrl = "http://" + ipStr;
   } else {
-    replaceAll(improvWiFiParams.deviceUrl, "{LOCAL_IPV4}", WiFi.localIP().toString().c_str());
+    replaceAll(improvWiFiParams.deviceUrl, "{LOCAL_IPV4}", ipStr);
   }
 
-  std::vector<uint8_t> data = improv::build_rpc_response(cmd, {improvWiFiParams.deviceUrl}, false);
+  std::vector<uint8_t> data = build_rpc_response(cmd, {improvWiFiParams.deviceUrl}, false);
   sendResponse(data);
 }
 
@@ -144,7 +148,7 @@ void ImprovWiFi::setCustomConnectWiFi(CustomConnectWiFi *connectWiFiCallBack) {
 }
 
 
-bool ImprovWiFi::tryConnectToWifi(std::string ssid, std::string password) {
+bool ImprovWiFi::tryConnectToWifi(const char* ssid, const char* password) {
   uint8_t count = 0;
 
   if (isConnected()) {
@@ -152,7 +156,7 @@ bool ImprovWiFi::tryConnectToWifi(std::string ssid, std::string password) {
     delay(100);
   }
 
-  WiFi.begin(ssid.c_str(), password.c_str());
+  WiFi.begin(ssid, password);
 
   while (!isConnected()) {
     delay(DELAY_MS_WAIT_WIFI_CONNECTION);
@@ -171,15 +175,21 @@ void ImprovWiFi::getAvailableWifiNetworks() {
 
   int networkNum = WiFi.scanNetworks();
 
-  for (int id = 0; id < networkNum; ++id) { 
-    std::vector<uint8_t> data = improv::build_rpc_response(
-            improv::GET_WIFI_NETWORKS, {WiFi.SSID(id), String(WiFi.RSSI(id)), (WiFi.encryptionType(id) == WIFI_AUTH_OPEN ? "NO" : "YES")}, false);
+  for (int id = 0; id < networkNum; ++id) {
+    std::vector<std::string> wifinetworks = {
+      WiFi.SSID(id).c_str(),
+      std::string{WiFi.RSSI(id)},
+      (WiFi.encryptionType(id) == WIFI_AUTH_OPEN ? "NO" : "YES")
+    };
+
+    std::vector<uint8_t> data = build_rpc_response(
+            ImprovTypes::GET_WIFI_NETWORKS, wifinetworks, false);
     sendResponse(data);
     delay(1);
   }
   //final response
   std::vector<uint8_t> data =
-          improv::build_rpc_response(improv::GET_WIFI_NETWORKS, std::vector<std::string>{}, false);
+          build_rpc_response(ImprovTypes::GET_WIFI_NETWORKS, std::vector<std::string>{}, false);
   sendResponse(data);
 }
 
@@ -209,7 +219,7 @@ bool ImprovWiFi::parseImprovSerial(size_t position, uint8_t byte, const uint8_t 
     return byte == 'V';
 
   if (position == 6)
-    return byte == improv::IMPROV_SERIAL_VERSION;
+    return byte == ImprovTypes::IMPROV_SERIAL_VERSION;
 
   if (position <= 8)
     return true;
@@ -227,11 +237,11 @@ bool ImprovWiFi::parseImprovSerial(size_t position, uint8_t byte, const uint8_t 
 
     if (checksum != byte) {
       _position = 0;
-      onErrorCallback(improv::Error::ERROR_INVALID_RPC);
+      onErrorCallback(ImprovTypes::Error::ERROR_INVALID_RPC);
       return false;
     }
 
-    if (type == improv::ImprovSerialType::TYPE_RPC) {   
+    if (type == ImprovTypes::ImprovSerialType::TYPE_RPC) {   
       _position = 0;  
       auto command = parseImprovData(&buffer[9], data_len, false);
       return onCommandCallback(command);
@@ -242,17 +252,17 @@ bool ImprovWiFi::parseImprovSerial(size_t position, uint8_t byte, const uint8_t 
 }
 
 
-improv::ImprovCommand ImprovWiFi::parseImprovData(const std::vector<uint8_t> &data, bool check_checksum) {
+ImprovTypes::ImprovCommand ImprovWiFi::parseImprovData(const std::vector<uint8_t> &data, bool check_checksum) {
   return parseImprovData(data.data(), data.size(), check_checksum);
 }
 
-improv::ImprovCommand ImprovWiFi::parseImprovData(const uint8_t *data, size_t length, bool check_checksum) {
-  improv::ImprovCommand improv_command;
-  improv::Command command = (improv::Command) data[0];
+ImprovTypes::ImprovCommand ImprovWiFi::parseImprovData(const uint8_t *data, size_t length, bool check_checksum) {
+  ImprovTypes::ImprovCommand improv_command;
+  ImprovTypes::Command command = (ImprovTypes::Command) data[0];
   uint8_t data_length = data[1];
 
   if (data_length != length - 2 - check_checksum) {
-    improv_command.command = improv::Command::UNKNOWN;
+    improv_command.command = ImprovTypes::Command::UNKNOWN;
     return improv_command;
   }
 
@@ -265,12 +275,12 @@ improv::ImprovCommand ImprovWiFi::parseImprovData(const uint8_t *data, size_t le
     }
 
     if ((uint8_t) calculated_checksum != checksum) {
-      improv_command.command = improv::Command::BAD_CHECKSUM;
+      improv_command.command = ImprovTypes::Command::BAD_CHECKSUM;
       return improv_command;
     }
   }
 
-  if (command == improv::Command::WIFI_SETTINGS) {
+  if (command == ImprovTypes::Command::WIFI_SETTINGS) {
     uint8_t ssid_length = data[2];
     uint8_t ssid_start = 3;
     size_t ssid_end = ssid_start + ssid_length;
@@ -289,12 +299,12 @@ improv::ImprovCommand ImprovWiFi::parseImprovData(const uint8_t *data, size_t le
 }
 
 
-void ImprovWiFi::setState(improv::State state) {  
+void ImprovWiFi::setState(ImprovTypes::State state) {  
   
   std::vector<uint8_t> data = {'I', 'M', 'P', 'R', 'O', 'V'};
   data.resize(11);
-  data[6] = improv::IMPROV_SERIAL_VERSION;
-  data[7] = improv::TYPE_CURRENT_STATE;
+  data[6] = ImprovTypes::IMPROV_SERIAL_VERSION;
+  data[7] = ImprovTypes::TYPE_CURRENT_STATE;
   data[8] = 1;
   data[9] = state;
 
@@ -306,11 +316,11 @@ void ImprovWiFi::setState(improv::State state) {
   serial->write(data.data(), data.size());
 }
 
-void ImprovWiFi::setError(improv::Error error) {
+void ImprovWiFi::setError(ImprovTypes::Error error) {
   std::vector<uint8_t> data = {'I', 'M', 'P', 'R', 'O', 'V'};
   data.resize(11);
-  data[6] = improv::IMPROV_SERIAL_VERSION;
-  data[7] = improv::TYPE_ERROR_STATE;
+  data[6] = ImprovTypes::IMPROV_SERIAL_VERSION;
+  data[7] = ImprovTypes::TYPE_ERROR_STATE;
   data[8] = 1;
   data[9] = error;
 
@@ -325,8 +335,8 @@ void ImprovWiFi::setError(improv::Error error) {
 void ImprovWiFi::sendResponse(std::vector<uint8_t> &response) {
   std::vector<uint8_t> data = {'I', 'M', 'P', 'R', 'O', 'V'};
   data.resize(9);
-  data[6] = improv::IMPROV_SERIAL_VERSION;
-  data[7] = improv::TYPE_RPC_RESPONSE;
+  data[6] = ImprovTypes::IMPROV_SERIAL_VERSION;
+  data[7] = ImprovTypes::TYPE_RPC_RESPONSE;
   data[8] = response.size();
   data.insert(data.end(), response.begin(), response.end());
 
@@ -338,3 +348,25 @@ void ImprovWiFi::sendResponse(std::vector<uint8_t> &response) {
   serial->write(data.data(), data.size());
 }
 
+std::vector<uint8_t> ImprovWiFi::build_rpc_response(ImprovTypes::Command command, const std::vector<std::string> &datum, bool add_checksum) {
+  std::vector<uint8_t> out;
+  uint32_t length = 0;
+  out.push_back(command);
+  for (const auto &str : datum) {
+    uint8_t len = str.length();
+    length += len + 1;
+    out.push_back(len);
+    out.insert(out.end(), str.begin(), str.end());
+  }
+  out.insert(out.begin() + 1, length);
+
+  if (add_checksum) {
+    uint32_t calculated_checksum = 0;
+
+    for (uint8_t byte : out) {
+      calculated_checksum += byte;
+    }
+    out.push_back(calculated_checksum);
+  }
+  return out;
+}
