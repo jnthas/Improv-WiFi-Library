@@ -4,7 +4,7 @@ Improv is a free and open standard with ready-made SDKs that offer a great user 
 
 This library provides an easier way to handle the Improv serial protocol in your firmware, allowing you to configure the WiFi via web browser as in the following [example](https://jnthas.github.io/improv-wifi-demo/).
 
-The simplest use example can be seen below:
+Simplest use example:
 
 ```cpp
 #include <ImprovWiFiLibrary.h>
