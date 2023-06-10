@@ -209,7 +209,7 @@ void ImprovWiFi::getAvailableWifiNetworks()
   {
     std::vector<std::string> wifinetworks = {
         WiFi.SSID(id).c_str(),
-        std::string{WiFi.RSSI(id)},
+        std::to_string(WiFi.RSSI(id)),
         (WiFi.encryptionType(id) == WIFI_AUTH_OPEN ? "NO" : "YES")
     };
 
