@@ -44,7 +44,7 @@ void setup()
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
 
-  improvSerial.setDeviceInfo(ImprovTypes::ChipFamily::CF_ESP32, "ImprovWiFiLib", "1.0.0", "BasicWebServer", "http://{LOCAL_IPV4}?name=Guest");
+  improvSerial.setDeviceInfo(ImprovTypes::ChipFamily::CF_ESP8266, "ImprovWiFiLib", "1.0.0", "BasicWebServer", "http://{LOCAL_IPV4}?name=Guest");
   improvSerial.onImprovError(onImprovWiFiErrorCb);
   improvSerial.onImprovConnected(onImprovWiFiConnectedCb);
   improvSerial.setCustomConnectWiFi(connectWifi);  // Optional
@@ -93,7 +93,7 @@ void handleHttpRequest()
           client.println();
           client.println("<!DOCTYPE HTML><html><body>");
           client.println("<h1 id=\"welcome\">Welcome!</h1>");
-          client.println("<p>This is a simple webpage served by your ESP32</p>");
+          client.println("<p>This is a simple webpage served by your ESP8266</p>");
           client.println("<h3>Chip Info</h3>");
           client.println("<ul><li>Chip Id:");
           client.println(ESP.getFlashChipId());
@@ -131,3 +131,4 @@ void blink_led(int d, int times)
     delay(d);
   }
 }
+
