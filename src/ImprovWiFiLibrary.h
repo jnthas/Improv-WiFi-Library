@@ -1,11 +1,18 @@
 #pragma once
 
-#include <WiFi.h>
+#if defined(ARDUINO_ARCH_ESP8266)
+  #include <ESP8266WiFi.h>
+  #define WIFI_OPEN ENC_TYPE_NONE
+#elif defined(ARDUINO_ARCH_ESP32)
+  #include <WiFi.h>
+  #define WIFI_OPEN WIFI_AUTH_OPEN
+#endif
+
 #include <Stream.h>
 #include "ImprovTypes.h"
 
 #ifdef ARDUINO
-#include <Arduino.h>
+  #include <Arduino.h>
 #endif
 
 /**

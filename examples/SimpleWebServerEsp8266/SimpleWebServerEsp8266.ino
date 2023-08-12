@@ -1,9 +1,9 @@
 
 #define LED_BUILTIN 2
 
-#include <WiFi.h>
+#include <ESP8266WiFi.h>
 #include <Esp.h>
-#include "ImprovWiFiLibrary.h"
+#include <ImprovWiFiLibrary.h>
 
 WiFiServer server(80);
 ImprovWiFi improvSerial(&Serial);
@@ -95,12 +95,12 @@ void handleHttpRequest()
           client.println("<h1 id=\"welcome\">Welcome!</h1>");
           client.println("<p>This is a simple webpage served by your ESP32</p>");
           client.println("<h3>Chip Info</h3>");
-          client.println("<ul><li>Model:");
-          client.println(ESP.getChipModel());
-          client.println("</li><li>Cores: ");
-          client.println(ESP.getChipCores());
-          client.println("</li><li>Revision: ");
-          client.println(ESP.getChipRevision());
+          client.println("<ul><li>Chip Id:");
+          client.println(ESP.getFlashChipId());
+          client.println("</li><li>Chip Speed: ");
+          client.println(ESP.getFlashChipSpeed());
+          client.println("</li><li>Chip Size: ");
+          client.println(ESP.getFlashChipSize());
           client.println("</li></ul>");
           client.println("<h3>Network Info</h3>");
           client.println("<ul><li>SSID: ");
