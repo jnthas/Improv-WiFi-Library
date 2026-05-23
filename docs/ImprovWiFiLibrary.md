@@ -1,9 +1,9 @@
-> This document was generated from file `ImprovWiFiLibrary.h` at 3/30/2023, 7:34:30 PM
-<a name="line-11"></a>
+> This document was generated from file `ImprovWiFiLibrary.h` at 5/20/2026, 1:48:17 PM
+<a name="line-18"></a>
 # ImprovWiFi
 
 ```cpp
-class ImprovWiFi /* line 37 */
+class ImprovWiFi /* line 44 */
 ```
 
 Improv WiFi class
@@ -31,14 +31,14 @@ void loop() {
 ```
 
 
-<a name="line-64"></a>
+<a name="line-71"></a>
 ## Constructors
 
-<a name="line-68"></a>
+<a name="line-75"></a>
 ### 💡 ImprovWiFi(Stream *serial)
 
 ```cpp
-ImprovWiFi(Stream *serial) /* line 75 */
+ImprovWiFi(Stream *serial) /* line 82 */
 ```
 
 Create an instance of ImprovWiFi
@@ -47,54 +47,54 @@ Create an instance of ImprovWiFi
 
 - `serial` - Pointer to stream object used to handle requests, for the most cases use `Serial`
 
-<a name="line-80"></a>
+<a name="line-87"></a>
 ## Type definition
 
-<a name="line-84"></a>
+<a name="line-91"></a>
 ### 🔘 typedef void(OnImprovError)(ImprovTypes::Error)
 
 ```cpp
-typedef void(OnImprovError)(ImprovTypes::Error) /* line 87 */
+typedef void(OnImprovError)(ImprovTypes::Error) /* line 94 */
 ```
 
 Callback function called when any error occurs during the protocol handling or wifi connection.
 
-<a name="line-89"></a>
+<a name="line-96"></a>
 ### 🔘 typedef void(OnImprovConnected)(const char *ssid, const char *password)
 
 ```cpp
-typedef void(OnImprovConnected)(const char *ssid, const char *password) /* line 92 */
+typedef void(OnImprovConnected)(const char *ssid, const char *password) /* line 99 */
 ```
 
 Callback function called when the attempt of wifi connection is successful. It informs the SSID and Password used to that, it's a perfect time to save them for further use.
 
-<a name="line-94"></a>
+<a name="line-101"></a>
 ### 🔘 typedef bool(CustomConnectWiFi)(const char *ssid, const char *password)
 
 ```cpp
-typedef bool(CustomConnectWiFi)(const char *ssid, const char *password) /* line 97 */
+typedef bool(CustomConnectWiFi)(const char *ssid, const char *password) /* line 104 */
 ```
 
 Callback function to customize the wifi connection if you needed. Optional.
 
-<a name="line-99"></a>
+<a name="line-106"></a>
 ## Methods
 
-<a name="line-103"></a>
+<a name="line-110"></a>
 ### Ⓜ️ void handleSerial()
 
 ```cpp
-void handleSerial() /* line 107 */
+void handleSerial() /* line 114 */
 ```
 
 Check if a communication via serial is happening. Put this call on your loop().
 
 
-<a name="line-109"></a>
+<a name="line-116"></a>
 ### Ⓜ️ void setDeviceInfo(ImprovTypes::ChipFamily chipFamily, const char *firmwareName, const char *firmwareVersion, const char *deviceName, const char *deviceUrl)
 
 ```cpp
-void setDeviceInfo(ImprovTypes::ChipFamily chipFamily, const char *firmwareName, const char *firmwareVersion, const char *deviceName, const char *deviceUrl) /* line 122 */
+void setDeviceInfo(ImprovTypes::ChipFamily chipFamily, const char *firmwareName, const char *firmwareVersion, const char *deviceName, const char *deviceUrl) /* line 129 */
 ```
 
 Set details of your device.
@@ -109,49 +109,58 @@ Set details of your device.
   There is overloaded method without `deviceUrl`, in this case the URL will be the local IP.
 
 
-<a name="line-125"></a>
+<a name="line-132"></a>
 ### Ⓜ️ void onImprovError(OnImprovError *errorCallback)
 
 ```cpp
-void onImprovError(OnImprovError *errorCallback) /* line 128 */
+void onImprovError(OnImprovError *errorCallback) /* line 135 */
 ```
 
 Method to set the typedef OnImprovError callback.
 
-<a name="line-130"></a>
+<a name="line-137"></a>
 ### Ⓜ️ void onImprovConnected(OnImprovConnected *connectedCallback)
 
 ```cpp
-void onImprovConnected(OnImprovConnected *connectedCallback) /* line 133 */
+void onImprovConnected(OnImprovConnected *connectedCallback) /* line 140 */
 ```
 
 Method to set the typedef OnImprovConnected callback.
 
-<a name="line-135"></a>
+<a name="line-142"></a>
 ### Ⓜ️ void setCustomConnectWiFi(CustomConnectWiFi *connectWiFiCallBack)
 
 ```cpp
-void setCustomConnectWiFi(CustomConnectWiFi *connectWiFiCallBack) /* line 138 */
+void setCustomConnectWiFi(CustomConnectWiFi *connectWiFiCallBack) /* line 145 */
 ```
 
 Method to set the typedef CustomConnectWiFi callback.
 
-<a name="line-140"></a>
+<a name="line-147"></a>
 ### Ⓜ️ bool tryConnectToWifi(const char *ssid, const char *password)
 
 ```cpp
-bool tryConnectToWifi(const char *ssid, const char *password) /* line 145 */
+bool tryConnectToWifi(const char *ssid, const char *password) /* line 152 */
 ```
 
 Default method to connect in a WiFi network.
 It waits `DELAY_MS_WAIT_WIFI_CONNECTION` milliseconds (default 500) during `MAX_ATTEMPTS_WIFI_CONNECTION` (default 20) until it get connected. If it does not happen, an error `ERROR_UNABLE_TO_CONNECT` is thrown.
 
 
-<a name="line-147"></a>
+<a name="line-154"></a>
+### Ⓜ️ bool tryConnectToWifi(const char *ssid, const char *password, uint32_t delayMs, uint8_t maxAttempts)
+
+```cpp
+bool tryConnectToWifi(const char *ssid, const char *password, uint32_t delayMs, uint8_t maxAttempts) /* line 157 */
+```
+
+Overload: tryConnectToWifi with custom delay and max attempts.
+
+<a name="line-159"></a>
 ### Ⓜ️ bool isConnected()
 
 ```cpp
-bool isConnected() /* line 151 */
+bool isConnected() /* line 163 */
 ```
 
 Check if connection is established using `WiFi.status() == WL_CONNECTED`

@@ -15,7 +15,7 @@ void setup() {
   improvSerial.setDeviceInfo(ImprovTypes::ChipFamily::CF_ESP32, "My-Device-9a4c2b", "2.1.5", "My Device");
 }
 
-void loop() { 
+void loop() {
   improvSerial.handleSerial();
 }
 ```
@@ -24,23 +24,27 @@ void loop() {
 
 You can also use Improv over Bluetooth (uses about 25kb memory). BLE support is **optional** and must be explicitly enabled.
 
+This fork's `ImprovWiFiBLE` is built against the BLE library **bundled with the ESP32 Arduino core** (`framework-arduinoespressif32/libraries/BLE`, a unified Bluedroid/NimBLE wrapper). No external NimBLE-Arduino dependency is required.
+
 ### Enabling BLE Support
 
-To enable BLE functionality, you need to:
+Add the build flag to your `platformio.ini`:
 
-1. **Add the build flag** to your `platformio.ini`:
-   ```ini
-   build_flags =
-       -DIMPROV_WIFI_BLE_ENABLED
-   ```
+```ini
+build_flags =
+    -DIMPROV_WIFI_BLE_ENABLED
+```
 
-2. **Add the NimBLE-Arduino dependency** to your `platformio.ini`:
-   ```ini
-   lib_deps =
-       h2zero/NimBLE-Arduino@^2.3.7
-   ```
+That's it — no `lib_deps` entry is needed for BLE.
 
-**Note:** BLE is not supported on ESP32-S2 and ESP32-C2 as these chips lack Bluetooth hardware. Only enable BLE for chips that support it (ESP32, ESP32-C3, ESP32-S3).
+**Note:** BLE works on any ESP32-family SoC with Bluetooth hardware (ESP32, ESP32-C3, ESP32-S3, ESP32-C6, ESP32-C5, ESP32-P4 — anything with `SOC_BLE_SUPPORTED` in the IDF). Chips without a BLE radio (e.g. ESP32-S2, ESP32-C2) are not supported.
+
+### Optional callbacks
+
+- `onImprovError(cb)` — connection / RPC errors.
+- `onImprovConnected(cb)` — Wi-Fi join succeeded.
+- `onImprovIdentify(cb)` — client asked the device to identify itself (e.g. blink an LED, beep). The capability is advertised by default.
+- `setCustomConnectWiFi(cb)` — override the default Wi-Fi connect logic.
 
 ### Example with BLE enabled:
 
@@ -49,13 +53,37 @@ To enable BLE functionality, you need to:
 
 ImprovWiFiBLE improvBLE;
 
+void onIdentify() {
+  // Blink an LED, beep, etc.
+}
+
 void setup() {
-  improvBLE.setDeviceInfo(ImprovTypes::ChipFamily::CF_ESP32, "My-Device-9a4c2b", "2.1.5", "My Device");
+  improvBLE.setDeviceInfo(ImprovTypes::ChipFamily::CF_ESP32,
+                          "My-Device-9a4c2b", "2.1.5", "My Device");
+  improvBLE.onImprovError(/* ... */);
+  improvBLE.onImprovConnected(/* ... */);
+  improvBLE.onImprovIdentify(onIdentify);    // optional
+  improvBLE.setCustomConnectWiFi(/* ... */); // optional
 }
 
 void loop() {
 }
 ```
+
+### Configuring a BLE Device
+
+Provisioning happens from a browser over Web Bluetooth at
+[improv-wifi.com](https://www.improv-wifi.com/). Open the page, click
+**Connect device to Wi-Fi**, pick the advertised device, enter SSID and
+password.
+
+Browsers tested:
+
+- **Chrome on macOS** — works out of the box.
+- **Chrome on Android** — works out of the box.
+- **iOS / iPadOS** — Safari and Chrome do **not** expose Web Bluetooth.
+  Use the [Bluefy browser](https://apps.apple.com/app/bluefy-web-ble-browser/id1492822055)
+  and open improv-wifi.com inside it.
 
 ### Using both Serial and BLE:
 
@@ -84,8 +112,8 @@ void loop() {
 
 ## Documentation
 
-The full library documentation can be seen in [docs/](docs/ImprovWiFiLibrary.md) folder.
-
+- Serial transport: [ImprovWiFiLibrary](docs/ImprovWiFiLibrary.md)
+- BLE transport: [ImprovWiFiBLE](docs/ImprovWiFiBLE.md)
 
 ## License
 

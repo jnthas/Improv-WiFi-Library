@@ -1,6 +1,6 @@
 {
   "name": "Improv WiFi Library",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "The library implements the Improv WiFi protocol allowing users to use this feature in their projects without effort.",
   "keywords": "network,wifi,improv,ble,bluetooth",
   "repository": {

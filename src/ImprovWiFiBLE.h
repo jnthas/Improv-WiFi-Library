@@ -9,9 +9,7 @@
 #include <Arduino.h>
 #endif
 
-#include <NimBLEDevice.h>
-#include <functional>
-#include <vector>
+#include <BLEDevice.h>
 
 /**
  * Improv WiFi BLE class
@@ -24,16 +22,18 @@
  *   improvBLE.setDeviceInfo(...);
  *   improvBLE.onImprovError(...);
  *   improvBLE.onImprovConnected(...);
+ *   improvBLE.onImprovIdentify(...);
  *   improvBLE.setCustomConnectWiFi(...);
  */
-class ImprovWiFiBLE : public NimBLECharacteristicCallbacks,
-                      public NimBLEServerCallbacks {
+class ImprovWiFiBLE : public BLECharacteristicCallbacks,
+                      public BLEServerCallbacks {
 public:
   /**
    * ## Type definitions (same as ImprovWiFi)
    */
   typedef void(OnImprovError)(ImprovTypes::Error);
   typedef void(OnImprovConnected)(const char *ssid, const char *password);
+  typedef void(OnImprovIdentify)();
   typedef bool(CustomConnectWiFi)(const char *ssid, const char *password);
 
   /**
@@ -58,6 +58,7 @@ public:
   // Callback setters
   void onImprovError(OnImprovError *errorCallback);
   void onImprovConnected(OnImprovConnected *connectedCallback);
+  void onImprovIdentify(OnImprovIdentify *identifyCallback);
   void setCustomConnectWiFi(CustomConnectWiFi *connectWiFiCallBack);
 
   // Default WiFi connect helper (same name as serial transport)
@@ -68,11 +69,14 @@ public:
   // Mirror of ImprovWiFi::isConnected
   bool isConnected();
 
-  // NimBLEServerCallbacks
-  void onDisconnect(NimBLEServer *s);
+  // initialized and BLE running
+  bool isAdvertising();
 
-  // NimBLECharacteristicCallbacks
-  void onWrite(NimBLECharacteristic *c, NimBLEConnInfo &info) override;
+  // BLEServerCallbacks
+  void onDisconnect(BLEServer *s) override;
+
+  // BLECharacteristicCallbacks
+  void onWrite(BLECharacteristic *c) override;
 
 private:
   // === Improv BLE UUIDs ===
@@ -112,9 +116,10 @@ private:
   void updateState(uint8_t s);
   void updateError(uint8_t e);
   void updateCaps(uint8_t caps);
+  void reportError(uint8_t bleErr, ImprovTypes::Error apiErr);
 
   // Build advertisement payload (Flags + 128-bit UUID + Service Data)
-  NimBLEAdvertisementData buildAdvData(uint8_t state, uint8_t caps);
+  BLEAdvertisementData buildAdvData(uint8_t state, uint8_t caps);
 
   // (Re)apply adv data that reflects current state/caps; keeps scan response
   void advertiseNow();
@@ -130,14 +135,14 @@ private:
   void sendDeviceUrl();
 
   // BLE objects
-  NimBLEServer *server_{nullptr};
-  NimBLEService *service_{nullptr};
-  NimBLECharacteristic *ch_state_{nullptr};
-  NimBLECharacteristic *ch_error_{nullptr};
-  NimBLECharacteristic *ch_rpc_cmd_{nullptr};
-  NimBLECharacteristic *ch_rpc_res_{nullptr};
-  NimBLECharacteristic *ch_caps_{nullptr};
-  NimBLEAdvertising *adv_{nullptr};
+  BLEServer *server_{nullptr};
+  BLEService *service_{nullptr};
+  BLECharacteristic *ch_state_{nullptr};
+  BLECharacteristic *ch_error_{nullptr};
+  BLECharacteristic *ch_rpc_cmd_{nullptr};
+  BLECharacteristic *ch_rpc_res_{nullptr};
+  BLECharacteristic *ch_caps_{nullptr};
+  BLEAdvertising *adv_{nullptr};
 
   // identity
   ImprovTypes::ChipFamily chip_{ImprovTypes::ChipFamily::CF_ESP32};
@@ -155,6 +160,7 @@ private:
   // user callbacks
   OnImprovError *onImprovErrorCallback_{nullptr};
   OnImprovConnected *onImprovConnectedCallback_{nullptr};
+  OnImprovIdentify *onImprovIdentifyCallback_{nullptr};
   CustomConnectWiFi *customConnectWiFiCallback_{nullptr};
 };
 
